@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.6.1 -->
+<title>Spotify ETL | Todd’s Data Science Blog</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Spotify ETL" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="A short extract, transform, load project using the Spotify API" />
+<meta property="og:description" content="A short extract, transform, load project using the Spotify API" />
+<link rel="canonical" href="https://toodoi.github.io/datascience/project/etl/2021/02/25/SpotifyETL.html" />
+<meta property="og:url" content="https://toodoi.github.io/datascience/project/etl/2021/02/25/SpotifyETL.html" />
+<meta property="og:site_name" content="Todd’s Data Science Blog" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-02-25T00:00:00-06:00" />
+<script type="application/ld+json">
+{"url":"https://toodoi.github.io/datascience/project/etl/2021/02/25/SpotifyETL.html","@type":"BlogPosting","headline":"Spotify ETL","dateModified":"2021-02-25T00:00:00-06:00","datePublished":"2021-02-25T00:00:00-06:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://toodoi.github.io/datascience/project/etl/2021/02/25/SpotifyETL.html"},"description":"A short extract, transform, load project using the Spotify API","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/datascience/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://toodoi.github.io/datascience/feed.xml" title="Todd's Data Science Blog" /><link rel="shortcut icon" type="image/x-icon" href="/datascience/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/datascience/">Todd&#39;s Data Science Blog</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/datascience/about/">About Me</a><a class="page-link" href="/datascience/search/">Search</a><a class="page-link" href="/datascience/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Spotify ETL</h1><p class="page-description">A short extract, transform, load project using the Spotify API</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2021-02-25T00:00:00-06:00" itemprop="datePublished">
+        Feb 25, 2021
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      3 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/datascience/categories/#project">project</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/datascience/categories/#ETL">ETL</a>
+        
+      
+      </p>
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-wrap flex-justify-end">
+          <div class="px-2">
+
+    <a href="https://github.com/Toodoi/datascience/tree/master/_notebooks/2021-02-25-SpotifyETL.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/datascience/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          
+          
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2021-02-25-SpotifyETL.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>This notebook is where I uploaded and briefly played around with the data from my Spotify ETL project.</p>
+<p>This was a fun project I did to test the SpotifyAPI and see how well cosine similarity would work using audio track features that Spotify provides to determine how similar tracks are to each other. I do not provide any level of analysis in this notebook but may come back to it in the future.</p>
+<p>The project can be found on my GitHub at: <a href="https://github.com/Toodoi/Spotify-ETL-project">https://github.com/Toodoi/Spotify-ETL-project</a>.</p>
+<p>I downloaded 105 unique tracks using the SpotifyAPI and also downloaded a set of audio features for each track. The features are all</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">google.colab</span> <span class="kn">import</span> <span class="n">drive</span>
+<span class="n">drive</span><span class="o">.</span><span class="n">mount</span><span class="p">(</span><span class="s1">&#39;/content/drive&#39;</span><span class="p">)</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;./drive/MyDrive/spotify_df&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Drive already mounted at /content/drive; to attempt to forcibly remount, call drive.mount(&#34;/content/drive&#34;, force_remount=True).
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>tracks</th>
+      <th>artists</th>
+      <th>ids</th>
+      <th>danceability</th>
+      <th>energy</th>
+      <th>key</th>
+      <th>loudness</th>
+      <th>acousticness</th>
+      <th>valence</th>
+      <th>tempo</th>
+      <th>feature_vector</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Norf Norf</td>
+      <td>Vince Staples</td>
+      <td>4uQ7wYsuL0DryknoDc11Hk</td>
+      <td>0.925</td>
+      <td>0.549</td>
+      <td>7.0</td>
+      <td>-6.572</td>
+      <td>0.39600</td>
+      <td>0.0904</td>
+      <td>100.014</td>
+      <td>[0.925, 0.549, 7, -6.572, 1, 0.0656, 0.396, 0.000154, 0.11, 0.0904, 100.014]</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>UN DIA (ONE DAY) (Feat. Tainy)</td>
+      <td>J Balvin</td>
+      <td>0EhpEsp4L0oRGM0vmeaN5e</td>
+      <td>0.571</td>
+      <td>0.693</td>
+      <td>6.0</td>
+      <td>-8.234</td>
+      <td>0.00536</td>
+      <td>0.3930</td>
+      <td>168.169</td>
+      <td>[0.571, 0.693, 6, -8.234, 0, 0.0545, 0.00536, 0, 0.173, 0.393, 168.169]</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Levitating (feat. DaBaby)</td>
+      <td>Dua Lipa</td>
+      <td>5nujrmhLynf4yMoMtj8AQF</td>
+      <td>0.702</td>
+      <td>0.825</td>
+      <td>6.0</td>
+      <td>-3.787</td>
+      <td>0.00883</td>
+      <td>0.9150</td>
+      <td>102.977</td>
+      <td>[0.702, 0.825, 6, -3.787, 0, 0.0601, 0.00883, 0, 0.0674, 0.915, 102.977]</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Selfless</td>
+      <td>The Strokes</td>
+      <td>2t0wwvR15fc3K1ey8OiOaN</td>
+      <td>0.538</td>
+      <td>0.679</td>
+      <td>4.0</td>
+      <td>-4.297</td>
+      <td>0.19100</td>
+      <td>0.0888</td>
+      <td>121.990</td>
+      <td>[0.538, 0.679, 4, -4.297, 1, 0.0333, 0.191, 0.00175, 0.0889, 0.0888, 121.99]</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>Across The Universe - triple j Like A Version</td>
+      <td>AURORA</td>
+      <td>2OLFswvObC0P4EJ2WQDbnH</td>
+      <td>0.281</td>
+      <td>0.183</td>
+      <td>7.0</td>
+      <td>-12.106</td>
+      <td>0.94100</td>
+      <td>0.1230</td>
+      <td>80.548</td>
+      <td>[0.281, 0.183, 7, -12.106, 1, 0.0301, 0.941, 0, 0.126, 0.123, 80.548]</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>I dropped some of audio features because they seemed uninteresting or were distributed very tightly around a value so they would not add much to differentiating the vectors for cosine similarity testing. I also dropped duplicates and some tracks which couldn't pick up audio features from the API.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;mode&#39;</span><span class="p">,</span> <span class="s1">&#39;instrumentalness&#39;</span><span class="p">,</span> <span class="s1">&#39;speechiness&#39;</span><span class="p">,</span> <span class="s1">&#39;liveness&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">(</span><span class="s1">&#39;tracks&#39;</span><span class="p">)</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">106</span><span class="p">:</span><span class="mi">114</span><span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Histograms of the remaining 7 audo features</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">8</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_png output_subarea ">
+<img src="data:image/png;base64,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
+" />
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Cosine-Similarity">Cosine Similarity<a class="anchor-link" href="#Cosine-Similarity"> </a></h1><p>Cosine similarity measures the similarity between two vectors by calculating the cosine of the angle between them. The similarity score ranges between 0 and 1 with the cosine of a 0 degree angle being equal to 1. This means that if two vectors are identical they will recieve a paired score of 1.</p>
+<p>The math for cosine similarity is just the dot product of the two vectors divided by the product of the magnitude of each vector.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">cos_sim</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+    <span class="n">dot_product</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+    <span class="n">norm_a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+    <span class="n">norm_b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">dot_product</span> <span class="o">/</span> <span class="p">(</span><span class="n">norm_a</span> <span class="o">*</span> <span class="n">norm_b</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">features</span> <span class="o">=</span> <span class="n">df</span><span class="p">[[</span><span class="s1">&#39;danceability&#39;</span><span class="p">,</span> <span class="s1">&#39;energy&#39;</span><span class="p">,</span> <span class="s1">&#39;key&#39;</span><span class="p">,</span> <span class="s1">&#39;loudness&#39;</span><span class="p">,</span> <span class="s1">&#39;acousticness&#39;</span><span class="p">,</span> <span class="s1">&#39;valence&#39;</span><span class="p">,</span> <span class="s1">&#39;tempo&#39;</span><span class="p">]]</span>
+<span class="n">norm</span> <span class="o">=</span> <span class="n">MinMaxScaler</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+<span class="n">vec_norm</span> <span class="o">=</span> <span class="n">norm</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">sim_list</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">idx_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">first_vector</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">105</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">second_vector</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">first_vector</span><span class="p">,</span> <span class="mi">104</span><span class="p">):</span>
+        <span class="n">sim</span> <span class="o">=</span> <span class="n">cos_sim</span><span class="p">(</span><span class="n">vec_norm</span><span class="p">[</span><span class="n">first_vector</span><span class="p">],</span> <span class="n">vec_norm</span><span class="p">[</span><span class="n">second_vector</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">sim_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sim</span><span class="p">)</span>
+        <span class="n">idx_list</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">first_vector</span><span class="p">,</span><span class="n">second_vector</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
+
+<span class="n">df_sim</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;Similarity&#39;</span> <span class="p">:</span> <span class="n">sim_list</span><span class="p">,</span> <span class="s1">&#39;Indexes&#39;</span><span class="p">:</span> <span class="n">idx_list</span><span class="p">})</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>There were 5,460 similarity pairs calculated and the distribution is plotted below. Most tracks had a relatively large cosine similarity score, probably because they are all taken from the same user.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df_sim</span><span class="o">.</span><span class="n">Similarity</span><span class="o">.</span><span class="n">hist</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_png output_subarea ">
+<img src="data:image/png;base64,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
+" />
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df_sim</span><span class="p">[</span><span class="n">df_sim</span><span class="o">.</span><span class="n">Similarity</span> <span class="o">&gt;</span> <span class="mf">0.999</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Similarity</th>
+      <th>Indexes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>664</th>
+      <td>0.999197</td>
+      <td>(6, 62)</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[[</span><span class="mi">6</span><span class="p">,</span> <span class="mi">62</span><span class="p">]]</span> <span class="c1">#Two tracks with high similarity from two heavy metal bands</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>tracks</th>
+      <th>artists</th>
+      <th>ids</th>
+      <th>danceability</th>
+      <th>energy</th>
+      <th>key</th>
+      <th>loudness</th>
+      <th>acousticness</th>
+      <th>valence</th>
+      <th>tempo</th>
+      <th>feature_vector</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>6</th>
+      <td>Nothing Else Matters</td>
+      <td>Metallica</td>
+      <td>0nLiqZ6A27jJri2VCalIUs</td>
+      <td>0.553</td>
+      <td>0.362</td>
+      <td>4.0</td>
+      <td>-11.218</td>
+      <td>0.045800</td>
+      <td>0.158</td>
+      <td>142.352</td>
+      <td>[0.553, 0.362, 4, -11.218, 0, 0.0263, 0.0458, 6.01e-06, 0.075, 0.158, 142.352]</td>
+    </tr>
+    <tr>
+      <th>62</th>
+      <td>White Unicorn</td>
+      <td>Wolfmother</td>
+      <td>3HODMfgPVIrlW9K5O3OW3s</td>
+      <td>0.351</td>
+      <td>0.797</td>
+      <td>0.0</td>
+      <td>-4.099</td>
+      <td>0.000589</td>
+      <td>0.394</td>
+      <td>106.502</td>
+      <td>[0.351, 0.797, 0, -4.099, 1, 0.0345, 0.000589, 0.000746, 0.0948, 0.394, 106.502]</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df_sim</span><span class="p">[</span><span class="n">df_sim</span><span class="o">.</span><span class="n">Similarity</span> <span class="o">&lt;</span> <span class="mf">0.20</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Similarity</th>
+      <th>Indexes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>3989</th>
+      <td>0.196504</td>
+      <td>(50, 65)</td>
+    </tr>
+    <tr>
+      <th>4517</th>
+      <td>0.164423</td>
+      <td>(61, 65)</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[[</span><span class="mi">61</span><span class="p">,</span> <span class="mi">65</span><span class="p">]]</span> <span class="c1">#The tracks with the least similarity are a low-fi study song and a rock song</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>tracks</th>
+      <th>artists</th>
+      <th>ids</th>
+      <th>danceability</th>
+      <th>energy</th>
+      <th>key</th>
+      <th>loudness</th>
+      <th>acousticness</th>
+      <th>valence</th>
+      <th>tempo</th>
+      <th>feature_vector</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>61</th>
+      <td>The Rain Song - Remaster</td>
+      <td>Led Zeppelin</td>
+      <td>3JLrri1xSCui3bzITDJbkk</td>
+      <td>0.336</td>
+      <td>0.318</td>
+      <td>0.0</td>
+      <td>-11.412</td>
+      <td>0.317</td>
+      <td>0.240</td>
+      <td>79.660</td>
+      <td>[0.336, 0.318, 0, -11.412, 1, 0.0263, 0.317, 0.0716, 0.111, 0.24, 79.66]</td>
+    </tr>
+    <tr>
+      <th>65</th>
+      <td>Tea House</td>
+      <td>Mondo Loops</td>
+      <td>3OzqVfE4tMkBKxm6ecJD82</td>
+      <td>0.637</td>
+      <td>0.272</td>
+      <td>0.0</td>
+      <td>-20.108</td>
+      <td>0.450</td>
+      <td>0.065</td>
+      <td>139.988</td>
+      <td>[0.637, 0.272, 0, -20.108, 0, 0.0446, 0.45, 0.257, 0.096, 0.065, 139.988]</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+</div>
+
+
+
+  </div><!-- from https://github.com/utterance/utterances -->
+<script src="https://utteranc.es/client.js"
+        repo="Toodoi/datascience"
+        issue-term="title"
+        label="blogpost-comment"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script><a class="u-url" href="/datascience/project/etl/2021/02/25/SpotifyETL.html" hidden></a>
+</article>
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/datascience/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/datascience/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/datascience/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>A blog to track my data science learning and help others on their journey</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/Toodoi" title="Toodoi"><svg class="svg-icon grey"><use xlink:href="/datascience/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
